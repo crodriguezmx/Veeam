@@ -1,0 +1,28 @@
+# Definir la descripción de la clave de cifrado
+# La clave de cifrado tiene nombre de "bck-key". Para obtener las llaves y nombres disponibles se debera ejecutar: Get-VBREncryptionKey
+$encryptionKeyDescription = "bck-key"  # Descripción de la clave de cifrado
+
+# Obtener la clave de cifrado por descripción
+$ekey = Get-VBREncryptionKey -Description $encryptionKeyDescription
+
+# Verificar si se encontró la clave de cifrado
+if ($ekey -ne $null) {
+    Write-Host "Clave de cifrado encontrada: $($ekey.Description)"
+} else {
+    Write-Host "Error: No se encontró una clave de cifrado con la descripción '$encryptionKeyDescription'."
+    return
+}
+
+# Obtener todos los jobs de respaldo
+$backupJobs = Get-VBRJob | Where-Object { $_.JobType -eq "Backup" }
+
+# Aplicar el cifrado a cada job de respaldo
+foreach ($job in $backupJobs) {
+    Write-Host "Procesando job: $($job.Name)"
+    
+    # Configurar el cifrado en el job
+    Set-VBRJobAdvancedStorageOptions -Job $job -EnableEncryption $True -EncryptionKey $ekey
+
+    # Confirmar la configuración
+    Write-Host "Cifrado habilitado para el job '$($job.Name)' con la clave de cifrado '$($ekey.Description)'."
+}
